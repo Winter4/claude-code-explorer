@@ -1,0 +1,1 @@
+{"agentType": "fork", "isFork": true, "description": "Проверить тесты", "name": "fork", "spawnDepth": 1, "requestShape": "background", "requestNonInteractive": false, "model": "inherit"}
