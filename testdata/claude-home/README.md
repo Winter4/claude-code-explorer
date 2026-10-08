@@ -14,7 +14,7 @@ python3 testdata/gen_fixtures.py testdata/claude-home
 |---|---|---|
 | `1111…` | `/home/alice/projects/demo` | Базовая: thinking + text одного `message.id` в двух записях, `turn_duration`, несколько `ai-title` (актуален последний), `cost-state` |
 | `2222…` | `/home/alice/projects/demo` | Параллельные `tool_use` → псевдо-ветка (не настоящая); `toolUseResult` строкой (ошибка); ветка git `feature/x` |
-| `3333…` | `/home/alice/projects/demo` | Настоящая ветка: откат и повторный промпт. Активная ветка «Go» по `leafUuid` последнего `last-prompt` |
+| `3333…` | `/home/alice/projects/demo` | Настоящая ветка: откат и повторный промпт. Активная ветка «Go» по `leafUuid` последнего `last-prompt`. `/rename`: два `custom-title` (актуален последний, приоритетнее `ai-title`), sidecar `custom-title.json`, `tag` |
 | `4444…` | `/home/alice/projects/my_app` | `cwd` меняется по ходу сессии (`cd backend`); кодирование с потерями `my_app` → `-my-app` |
 | `5555…` | `/home/alice/projects/demo` | Форк-субагент в `subagents/` с `.meta.json` и `fork-context-ref` |
 | `6666…` | `/home/alice/projects/demo` | Устойчивость: неизвестный `type` и поля, служебные `<command-name>` и `isMeta`, `<synthetic>` ошибка API, **недописанная последняя строка**; активна (`sessions/424242.json`) |

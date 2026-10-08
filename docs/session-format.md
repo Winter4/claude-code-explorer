@@ -10,6 +10,7 @@
 | Путь | Что это | Нужно cce |
 |---|---|---|
 | `projects/<encoded-dir>/<session-id>.jsonl` | Сессия | да, основное |
+| `projects/<encoded-dir>/<session-id>/custom-title.json` | Sidecar заголовка из `/rename`: `{"customTitle": "…"}`, права `0600`; удаляется при сбросе заголовка | да |
 | `projects/<encoded-dir>/<session-id>/tool-results/*.txt` | Большие выводы инструментов, вынесенные из JSONL | при sync |
 | `projects/<encoded-dir>/<session-id>/subagents/agent-<id>.jsonl` | Транскрипт субагента / форка | да |
 | `projects/<encoded-dir>/<session-id>/subagents/agent-<id>.meta.json` | Метаданные субагента (`agentType`, `isFork`, `description`, `model`, …) | да |
@@ -85,6 +86,8 @@
 | `last-prompt` | `lastPrompt`, `leafUuid` | Последний промпт и **текущий лист** активной ветки |
 | `cost-state` | `totalCostUSD`, `totalDuration`, `totalLinesAdded/Removed`, `modelUsage`, … | Накопительная стоимость/статистика, актуальна последняя |
 | `mode`, `permission-mode` | `mode`, `permissionMode` | Режимы сессии |
+| `custom-title` | `customTitle` | Заголовок, заданный пользователем через `/rename`. Актуален **последний** |
+| `tag` | `tag` | Тег сессии (один). Актуален последний; пустая строка — тег снят |
 | `agent-name` | `agentName` | Имя сессии (для мультиагентного режима) |
 | `file-history-snapshot` | `messageId`, `snapshot.trackedFileBackups` | Снапшот файлов на момент сообщения (для `/rewind`) |
 | `file-history-delta` | `messageId`, `trackingPath`, `backup` (`backupFileName`, `realParentDir` — **абсолютный путь**) | Инкремент снапшота |
@@ -92,7 +95,15 @@
 | `bridge-session`, `atis-latch` | — | Внутреннее, игнорировать |
 | `fork-context-ref` | `agentId`, `parentSessionId`, `parentLastUuid`, `contextLength` | Первая строка транскрипта форк-субагента: от какой точки родителя он ответвился |
 
-**[не проверено]** `summary` (`summary`, `leafUuid`) — заголовок в старых версиях; `custom-title` — заголовок, заданный пользователем через `/rename`.
+**[не проверено]** `summary` (`summary`, `leafUuid`) — заголовок в старых версиях.
+
+### Заголовок сессии
+
+`custom-title` и `tag` в исследованных сессиях не встретились. Их формат и поведение **проверены по коду клиента 2.1.294**:
+
+- `/rename` дописывает в конец JSONL запись `{"type":"custom-title","customTitle":"…","sessionId":"…"}` и пишет sidecar `<session-id>/custom-title.json` с тем же заголовком.
+- Записи `custom-title`, `ai-title`, `tag`, `agent-name`, `last-prompt` клиент переписывает в конец файла, чтобы они оставались в «хвосте». Поэтому одна и та же запись может встречаться в файле много раз, актуальна последняя.
+- Отображаемый заголовок выбирается по приоритету: `agentName` → `customTitle` → `aiTitle` → `summary` → первый промпт → первые 8 символов `sessionId`.
 
 ## Дерево сообщений и ветки
 
@@ -116,7 +127,7 @@
 ## Выводы для парсера cce
 
 - Читать построчно (streaming), битые строки пропускать, неизвестные типы игнорировать.
-- Для списка сессий достаточно: корневой `cwd`, первый/последний `timestamp`, последний `ai-title` (или `custom-title`), последний `gitBranch`, число реплик человека, последний `cost-state`, размер файла.
+- Для списка сессий достаточно: корневой `cwd`, первый/последний `timestamp`, заголовок (последние `agent-name` / `custom-title` / `ai-title` по приоритету выше), последний `tag`, последний `gitBranch`, число реплик человека, последний `cost-state`, размер файла.
 - Для списка можно не парсить `message` целиком — декодировать только «шапку» записи.
 - Активность сессии — по `~/.claude/sessions/*.json` (`sessionId` + живой `pid`).
 
