@@ -3,7 +3,7 @@
 
 Запуск из корня репо:  python3 testdata/gen_fixtures.py testdata/claude-home
 """
-import json, os, sys
+import copy, json, os, sys
 ROOT = sys.argv[1]
 V = "2.1.288"
 def uid(sess, n): return f"{sess[:8]}-0000-4000-8000-{n:012d}"
@@ -71,6 +71,7 @@ s.meta(type="ai-title", aiTitle="Знакомство с демо-проекто
 s.meta(type="last-prompt", lastPrompt="Спасибо", leafUuid=a2, sessionId=s.sid)
 cost(s, 0.0123)
 s.write(f"{P}/{s.sid}.jsonl")
+s1 = s
 
 # 2. tools: parallel tool_use
 s = S("22222222-2222-4222-8222-222222222222", "/home/alice/projects/demo", branch="feature/x")
@@ -155,3 +156,26 @@ os.makedirs(os.path.join(ROOT, "sessions"), exist_ok=True)
 with open(os.path.join(ROOT, "sessions/424242.json"), "w") as fh:
     json.dump({"pid": 424242, "sessionId": s.sid, "cwd": "/home/alice/projects/demo", "startedAt": 1788256800000,
                "version": V, "kind": "interactive", "entrypoint": "cli", "status": "busy", "updatedAt": 1788256900000}, fh)
+
+# 7-8. copies of session 1: same uuid/parentUuid, new sessionId, metadata records not copied
+def copy_of(src, sid, **extra):
+    c = S(sid, src.cwd); c.t = src.t
+    for l in src.lines:
+        if "uuid" in l:
+            d = copy.deepcopy(l); d["sessionId"] = sid; d.update({k: v(d) for k, v in extra.items()}); c.lines.append(d)
+    return c, c.lines[-1]["uuid"]
+
+# 7. claude --resume <1111> --fork-session: no link to the source except shared uuids
+s, leaf = copy_of(s1, "77777777-7777-4777-8777-777777777777")
+s.lines[:0] = [{"type": "mode", "mode": "normal", "sessionId": s.sid}]
+u = s.human(leaf, "А теперь кратко")
+a = s.asst(u, [{"type": "text", "text": "Демо для cce."}], "fork7")
+s.meta(type="ai-title", aiTitle="Краткое описание демо", sessionId=s.sid)
+s.meta(type="last-prompt", lastPrompt="А теперь кратко", leafUuid=a, sessionId=s.sid)
+cost(s, 0.0011)
+s.write(f"{P}/{s.sid}.jsonl")
+
+# 8. /branch in session 1: every copied record has forkedFrom
+s, leaf = copy_of(s1, "88888888-8888-4888-8888-888888888888",
+                  forkedFrom=lambda d: {"sessionId": s1.sid, "messageUuid": d["uuid"]})
+s.write(f"{P}/{s.sid}.jsonl")

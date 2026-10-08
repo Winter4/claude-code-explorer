@@ -18,3 +18,5 @@ python3 testdata/gen_fixtures.py testdata/claude-home
 | `4444…` | `/home/alice/projects/my_app` | `cwd` меняется по ходу сессии (`cd backend`); кодирование с потерями `my_app` → `-my-app` |
 | `5555…` | `/home/alice/projects/demo` | Форк-субагент в `subagents/` с `.meta.json` и `fork-context-ref` |
 | `6666…` | `/home/alice/projects/demo` | Устойчивость: неизвестный `type` и поля, служебные `<command-name>` и `isMeta`, `<synthetic>` ошибка API, **недописанная последняя строка**; активна (`sessions/424242.json`) |
+| `7777…` | `/home/alice/projects/demo` | Копия `1111…` через `--fork-session`: те же `uuid`/`parentUuid`, новый `sessionId`, метаданные не скопированы, ссылки на источник нет; плюс своя реплика |
+| `8888…` | `/home/alice/projects/demo` | Копия `1111…` через `/branch`: то же, но с `forkedFrom` в каждой записи; своих реплик нет |
